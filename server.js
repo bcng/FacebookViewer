@@ -11,7 +11,9 @@ app.use(express.static(__dirname + '/public'));
 
 //include session middleware 
 app.use(session({
-    secret: 'woot123456'
+    secret: 'woot123456',    
+    resave: true,
+    saveUninitialized: true
 })); //now, our express app is configured with a session with a secret
 
 //include passport middleware
@@ -30,12 +32,30 @@ passport.use(new FacebookStrategy({
 //define auth endpoints
 app.get('/auth/facebook', passport.authenticate('facebook'));
 app.get('/auth/facebook/callback', passport.authenticate('facebook', {
-	successRedirect: '/',
+	successRedirect: '/me',
 	failureRedirect: '/login'
 }), function(req, res) {
 	console.log(req.session);
 });
 
-app.listen(3000, function() {
-
+//create the deserialize/serializer methods on passport
+passport.serializeUser(function(user, done) {
+  done(null, user);
 });
+
+passport.deserializeUser(function(obj, done) {
+  done(null, obj);
+});
+
+//create viewer endpoint
+app.get('/me', function(req, res){
+	console.log(req.user);
+	return res.send(req.user);
+})
+
+//host on port 3000
+var port = 3000;
+app.listen(port, function() {
+	console.log('starting server on ' + port);
+});
+
